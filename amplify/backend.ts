@@ -72,3 +72,15 @@ bucket.addToResourcePolicy(
     resources: [bucket.arnForObjects('*')],
   })
 );
+
+// 3️⃣ Add an output so that the table name is exported to amplify_outputs.json
+backend.addOutput({
+  custom: {
+    tables: {
+      Scenario: {
+        tableName: table.tableName,
+        tableArn: table.tableArn,
+      },
+    }
+  },
+});
