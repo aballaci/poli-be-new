@@ -1,6 +1,5 @@
 import { type ClientSchema, a, defineData, secret } from '@aws-amplify/backend';
 import { scenarioGenerator } from '../functions/scenario-generator/resource';
-import { sayHello } from "../functions/say-hello/resource";
 
 
 /*== STEP 1 ===============================================================
@@ -18,11 +17,6 @@ const topicDifficultyLangKeys = [
 ] as const;
 
 const schema = a.schema({
-  Todo: a
-    .model({
-      content: a.string(),
-    })
-    .authorization((allow) => [allow.publicApiKey()]),
   Scenario: a.model({
     id: a.id().required(),
     topic: a.string().required(),
@@ -54,15 +48,6 @@ const schema = a.schema({
     .authorization((allow) => [allow.publicApiKey()])
     .handler(a.handler.function(scenarioGenerator)),
 
-
-  sayHello: a
-    .query()
-    .arguments({
-      name: a.string(),
-    })
-    .returns(a.string())
-    .authorization((allow) => [allow.publicApiKey()])
-    .handler(a.handler.function(sayHello)),
 });
 
 export type Schema = ClientSchema<typeof schema>;

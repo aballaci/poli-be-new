@@ -1,14 +1,20 @@
 import { defineBackend } from '@aws-amplify/backend';
 import { data } from './data/resource.js';
-import { sayHello } from './functions/say-hello/resource';
 import { scenarioGenerator } from './functions/scenario-generator/resource';
 
+import { Effect, Policy, PolicyStatement } from "aws-cdk-lib/aws-iam";
+
+import { aws_s3 as s3 } from 'aws-cdk-lib';
+import { auth } from "./auth/resource";
+
 import * as iam from "aws-cdk-lib/aws-iam"
+import { poliAssets } from './storage/resource.js';
 
 const backend = defineBackend({
+  auth,
   data,
-  sayHello,
   scenarioGenerator,
+  poliAssets
 });
 
 
@@ -45,5 +51,24 @@ scenarioLambda.addToRolePolicy(new iam.PolicyStatement({
   resources: [table.tableArn], // <- table ARN only
 }));
 
-console.log("✅ Table:", table.tableName);
-console.log("✅ Lambda:", scenarioLambda.functionName);
+// --- Modify the underlying bucket (remove BlockPublicAccess + add policy) ---
+const bucket = backend.poliAssets.resources.bucket;
+
+// Escape hatch: Access low-level CfnBucket to disable Block Public Access
+const cfnBucket = bucket.node.defaultChild as s3.CfnBucket;
+cfnBucket.publicAccessBlockConfiguration = {
+  blockPublicAcls: false,
+  blockPublicPolicy: false,  // Key: Allows public policies like yours
+  ignorePublicAcls: false,
+  restrictPublicBuckets: false,
+};
+
+// Add public read policy (no sid; use AnyPrincipal and arnForObjects)
+bucket.addToResourcePolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: ['s3:GetObject'],
+    principals: [new iam.AnyPrincipal()],
+    resources: [bucket.arnForObjects('*')],
+  })
+);
