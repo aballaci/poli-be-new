@@ -33,7 +33,7 @@ const schema = a.schema({
     .secondaryIndexes((index) => [
       index("scenarioKey").name("byScenarioKey"),
     ])
-    .authorization((allow) => [allow.publicApiKey()]),
+    .authorization((allow) => [allow.authenticated()]),
 
 
   generateScenario: a
@@ -45,7 +45,7 @@ const schema = a.schema({
       targetLang: a.string().required(),
     })
     .returns(a.ref('Scenario'))
-    .authorization((allow) => [allow.publicApiKey()])
+    .authorization((allow) => [allow.authenticated()])
     .handler(a.handler.function(scenarioGenerator)),
 
 });
@@ -55,7 +55,6 @@ export type Schema = ClientSchema<typeof schema>;
 export const data = defineData({
   schema,
   authorizationModes: {
-    defaultAuthorizationMode: 'apiKey',
-    apiKeyAuthorizationMode: { expiresInDays: 30 }
+    defaultAuthorizationMode: 'userPool',
   },
 });
